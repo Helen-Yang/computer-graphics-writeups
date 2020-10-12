@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  body {
+    padding: 100px;
+    width: 80%;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  table {
+    table-layout: fixed;
+    /*border-collapse: collapse;*/
+  }
+  td, tr, img  {
+    padding: 0px; margin: 0px; border: none;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+  figcaption {
+    text-align: center;
+  }
+
+</style>
+<title>CS 184 Projects</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+<body>
+  <div style="text-align: center">
+
+<p>**This repository contains my project writeups from the UC Berkeley computer graphics course. If you are an employer interested in viewing my project source code, please contact me privately.**</p>
+<h1 align="middle"><a href="https://cs184.eecs.berkeley.edu/sp20">CS 184: Computer Graphics and Imaging, Spring 2020</a></h1>
+<h2 align="middle"><a href="https://www.linkedin.com/in/helenyang0/">Helen Yang</a></h2>
+<br>
+<h2 align="middle"><a href="./project-1-rasterizer/project-1-rasterizer.html">Project 1: Rasterizer</a></h2>
+  <p>
+    Rasterizing triangles with various antialiasing methods, use of homogenous and barycentric coordinates, texture mapping with mipmaps. 
+  </p>
+    <img src="./project-1-rasterizer/images/linearpixel_16.png" width="400px"/>
+    <figcaption align="middle">Texture mapping: 16 pixels supersampling with bilinear interpolation.</figcaption>
+<br>
+
+<h2 align="middle"><a href="./project-2-meshedit/project-2-meshedit.html">Project 2: MeshEdit</a></h2>
+
+      <p>
+    Bezier curves and surfaces, halfedge mesh operations, loop subdivision. 
+  </p>
+<table>
+    <col width="25%">
+    <col width="25%">
+    <col width="25%">
+    <col width="25%">
+    </tr>
+     <tr>
+     <td>
+       <img src="./project-2-meshedit/images/part6_torus1.png" align="middle" width="100%"/>
+     </td>
+     <td>
+       <img src="./project-2-meshedit/images/part6_torus2.png" align="middle" width="100%"/>
+     </td>
+     <td>
+       <img src="./project-2-meshedit/images/part6_torus3.png" align="middle" width="100%"/>
+     </td>
+     <td>
+       <img src="./project-2-meshedit/images/part6_torus4.png" align="middle" width="100%"/>
+     </td>
+   </tr>
+    <tr>
+      <td>
+        <img src="./project-2-meshedit/images/part6_orig.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="./project-2-meshedit/images/part6_teapot2.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="./project-2-meshedit/images/part6_teapot3.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="./project-2-meshedit/images/part6_teapot4.png" align="middle" width="100%"/>
+      </td>
+    </tr>
+  </table>    <figcaption align="middle">Meshes at different levels of subdivision. </figcaption>
+<br>
+
+<h2 align="middle"><a href="./project-3-1-pathtracer/project-3-1-pathtracer.html">Project 3-1: PathTracer</a></h2>
+  <p>
+    Path tracing with ray-primitive intersection and bounding volume hierarchy for efficiency.  
+  </p>
+
+            <img src="./project-3-1-pathtracer/images/lucy.png" align="middle" width="400px"/>
+      <figcaption align="middle"></figcaption>
+<br>
+
+<h2 align="middle"><a href="./project-3-2-advanced-pathtracer/project-3-2-advanced-pathtracer.html">Project 3-2: Advanced PathTracer</a></h2>
+  <p>
+    Mirror and glass materials, depth of field. 
+  </p> 
+    <table style="width=100%">
+
+        <tr>
+            <td>
+                 <img src="./project-3-2-advanced-pathtracer/images/spheres_100.png" width="480px" />
+                <figcaption align="middle">Glass spheres</figcaption>
+            </td>
+            <td>
+                 <img src="./project-3-2-advanced-pathtracer/images/drag_d_4-6.png" width="480px" />
+                <figcaption align="middle">Playing with focal distance and aperture</figcaption>
+            </td>
+
+        </tr>
+    </table>
+<br>
+
+<h2 align="middle"><a href="./project-4-cloth-simulation/project-4-cloth-simulation.html">Project 4: Cloth Simulation</a></h2>
+  <p>
+    Mass and spring system, self collision, various shaders. 
+  </p>
+    <img style="width:50%" src="./project-4-cloth-simulation/images/p5_phong.png"><figcaption>Cloth on sphere, Blinn-Phong shading.</figcaption>
+<br>
+</div>
+
+</body>
+</html>

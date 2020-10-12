@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+        padding: 10%;
+        padding-top: 5%;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  img {
+      width: 100%;
+      height: auto;
+    }
+    table {
+      width: 100%;
+      height: auto;
+      text-align: center;
+      margin-left:auto;margin-right:auto; 
+    }
+    figcaption {
+      text-align:center;
+    }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Project 4: Cloth Simulator</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+<body>
+  <p><i>**This is from a UC Berkeley course project, so the source code is not publicly viewable. If you are an employer interested in viewing my project code, please contact me privately.**</i></p>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2020</h1>
+<h1 align="middle">Project 4: Cloth Simulator</h1>
+<h2 align="middle">Helen Yang</h2>
+<br>
+<h2 align="middle">Overview</h2>
+<p>In this project, I implemented a cloth simulation. I enjoyed this project because while it was focused on particle simulation, it covered a variety of different topics from throughout the course such as approximation models (Verlet integration), calculating intersection points, finding ways to improve efficiency (spatial hashing), lighting, and textures. Debugging the project also produced a variety of visually interesting bugs when the cloth would unintentionally become a writhing rainbow mass. I also enjoyed creating shader programs and learning more about how they worked because I had heard about them before but never actually worked with them.</p>
+
+<h2 align="middle">Part 1: Masses and springs</h2>
+<div align="middle">
+    <img style="width:70%" src="images/p1_alltypes.png"><figcaption>Mass spring system with all types of constraints.</figcaption>
+</div>
+<p>In this part, I modeled the cloth as a set of point masses connected by different types of springs. The three types of springs were structural (forming the grid), shearing (between diagonal point masses), and bending (forming a grid between alternating point masses).  </p>
+<table >
+  <col width="50%">
+  <col width="50%">
+  <tr>
+    <td><img src="images/p1_noshear.png"><figcaption>No shearing constraints.</figcaption></td>
+    <td><img src="images/p1_shearonly.png"><figcaption>Only shearing constraints.</figcaption></td>
+  </tr>
+  <tr>
+    
+  </tr>
+</table>
+<br><br>
+
+<h2 align="middle">Part 2: Simulation via numerical integration</h2>
+<table >
+  <col width="50%">
+  <col width="50%">
+  <tr>
+    <td>
+    <img src="images/p2_pinned4.png"><figcaption>Final resting state of cloth wireframe with 4 pinned points.</figcaption>
+    </td>
+    <td>
+    <img src="images/p2_rest.png"><figcaption>Final resting state of cloth with 2 pinned points.</figcaption>
+    </td>
+  </tr>
+</table>
+<p>
+  The next step was to simulate the forces on the cloth. I calculated the forces (both from external forces like gravity and from springs) and used Verlet integration with some damping to approximate the new positions of the point masses. I also applied a correction to the point mass positions which constrains the distance between 2 points connected by a spring to be at most 10% greater than the spring's rest length based on <a href="https://www.cs.rpi.edu/~cutler/classes/advancedgraphics/S14/papers/provot_cloth_simulation_96.pdf">this paper</a>.
+</p>
+<table >
+  <col width="50%">
+  <col width="50%">
+  <tr>
+    <td><img src="images/p2_500ks.png"><figcaption>ks = 500 N/m </figcaption></td>
+    <td><img src="images/p2_10000ks.png"><figcaption>ks = 10000 N/m</figcaption></td>
+  </tr>
+</table>
+<p>
+  The spring constant ks determines how stiff or bouncy a spring is, and is a multiplicative factor in the calculation of the force a bending spring exerts on its masses. A larger ks means more stiff, requiring more force to move, so the cloth falls with less ripples than cloth with a lower ks. 
+</p>
+
+<table >
+  <col width="50%">
+  <col width="50%">
+  <tr>
+    <td><img src="images/p2_1d.png"><figcaption>density = 1 g/cm^2 </figcaption></td>
+    <td><img src="images/p2_60d.png"><figcaption>density = 60 g/cm^2</figcaption></td>
+  </tr>
+</table>
+<p>
+  The density parameter determines how heavy the cloth is per unit area. Cloth with a higher density is more bowed down because the force of gravity acts more on objects with greater masses. 
+</p>
+
+<table >
+  <col width="50%">
+  <col width="50%">
+  <tr>
+    <td><img src="images/p2_-1damp.png"><figcaption>damping factor = 0.1% </figcaption></td>
+    <td><img src="images/p2_1damp.png"><figcaption>damping factor = 1%</figcaption></td>
+  </tr>
+</table>
+<p>
+  The damping factor is used to estimate loss of energy to friction and heat loss and scales down the velocity used to calculate a new object position. A higher damping factor means more energy is lost, resulting in a smoother, less rippled falling cloth. This is similar to increasing the spring constant.
+</p>
+<br><br>
+
+<h2 align="middle">Part 3: Handling collisions with other objects</h2>
+<div align="middle">
+    <img style="width:50%" src="images/p3_plane.png"><figcaption>Cloth lying at rest on a plane.</figcaption>
+</div>
+<p>
+  In this part, I implemented collisions between the cloth and spheres and planes. 
+</p>
+<table >
+  <col width="33%">
+  <col width="33%">
+  <col width="33%">
+  <tr>
+    <td><img src="images/p3_500.png"><figcaption>ks = 500 N/m </figcaption></td>
+    <td><img src="images/p3_5000.png"><figcaption>ks = 5000 N/m</figcaption></td>
+    <td><img src="images/p3_50000.png"><figcaption>ks = 50000 N/m</figcaption></td>
+  </tr>
+</table>
+<p>
+  In these examples of cloth draping over a sphere, we can see the effects of varying the spring constant ks. A lower ks results in more folds and the cloth draping more vertically than horizontally. A higher ks, corresponding to more force needed to move the springs, results in less folds and more stiff horizontal movement. 
+</p>
+<br><br>
+
+<h2 align="middle">Part 4: Handling self-collisions</h2>
+<p>
+  In this part, I implemented self-collisions so that the cloth wouldn't clip with itself. Since it would be too expensive (n^2 time) to check ever pair of point masses to see if they were too close together, I used a spatial hashmap, grouping point masses into sets of nearby point masses. Then, for each point mass, I would only test point masses which hashed to the same, spatially close set, greatly reducing the computational requirements. 
+</p>
+<table >
+  <col width="33%">
+  <col width="33%">
+  <col width="33%">
+  <tr>
+    <td><img src="images/p4_orig1.png"><figcaption>default parameters</figcaption></td>
+    <td><img src="images/p4_orig2.png"><figcaption> </figcaption></td>
+    <td><img src="images/p4_orig3.png"><figcaption></figcaption></td>
+  </tr>
+  <tr>
+    <td><img src="images/p4_ks1.png"><figcaption>ks = 500 N/m</figcaption></td>
+    <td><img src="images/p4_ks2.png"><figcaption></figcaption></td>
+    <td><img src="images/p4_ks3.png"><figcaption></figcaption></td>
+  </tr>
+  <tr>
+    <td><img src="images/p4_dens1.png"><figcaption>density = 1 g/cm^2</figcaption></td>
+    <td><img src="images/p4_dens2.png"><figcaption></figcaption></td>
+    <td><img src="images/p4_dens3.png"><figcaption></figcaption></td>
+  </tr>
+</table>
+<p>As expected, reducing the spring constant makes the cloth more bouncy, resulting in smaller, more folds. <br>Decreasing the density makes the cloth fall in smoother, larger folds. </p>
+<br><br>
+
+<h2 align="middle">Part 5: Shaders</h2>
+<p>
+  A shader program allows one to specify the color, affected by lighting, at a position of a 3D object, optimized to be processed in parallel using a GPU. In this project, we used OpenGL Shading Language (GLSL) shaders, and a shader program consists of a linked vertex shaders and fragment shaders. Vertex shaders specify transformations of vertices, modifying geometric properties like positions and normals to be used by fragment shaders, which output a color for that position. In most of the shaders for this project, the code modified was the fragement shader, but for the displacement shader, the mesh geometry had to be changed, so vertex shader code was modified as well. 
+</p>
+<div align="middle">
+    <img style="width:50%" src="images/p5_phong.png"><figcaption>Blinn-Phong shading.</figcaption>
+</div>
+<p>
+  The Blinn-Phong shading model separates lighting effects into 3 separate components: ambient (constant base color), diffuse (shading independent of view direction but dependent on source direction), and specular (intensity reflections that depend on view direction). 
+</p>
+<table >
+  <col width="33%">
+  <col width="33%">
+  <col width="33%">
+  <tr>
+    <td><img src="images/p5_phonga.png"><figcaption>Phong, ambient only.</figcaption></td>
+    <td><img src="images/p5_phongd.png"><figcaption>Phong, diffuse only. </figcaption></td>
+    <td><img src="images/p5_phongs.png"><figcaption>Phong, specular only.</figcaption></td>
+  </tr>
+  </table>
+  <div align="middle">
+    <img style="width:50%" src="images/p5_tex.png"><figcaption>Using a custom texture.</figcaption>
+</div>
+<p>Displacement mapping and bump mapping both produce texture patterns, but displacement mapping actually modifies the vertex positions in the vertex shader while bump mapping only modifies the normals in the fragment shader. You can see the vertices have moved in the displacement mapping examples below. Increasing the resolution of the sphere increases the jaggedness of the displacement mapped texture.</p>
+<div align="middle">
+    <img style="width:50%" src="images/p5_bumpcloth.png"><figcaption>Cloth using a brick pattern bump map.</figcaption>
+</div>
+<table >
+  <col width="50%">
+  <col width="50%">
+  <tr>
+    <td><img src="images/p5_bump.png"><figcaption>Bump mapping.</figcaption></td>
+    <td><img src="images/p5_displ.png"><figcaption>Displacement mapping. </figcaption></td>
+  </tr>
+    <tr>
+    <td><img src="images/p5_bump0.png"><figcaption>Bump mapping with lower resolution.</figcaption></td>
+    <td><img src="images/p5_displ0.png"><figcaption>Displacement mapping with lower resolution. </figcaption></td>
+  </tr>
+    <tr>
+    <td><img src="images/p5_bump128.png"><figcaption>Bump mapping with higher resolution.</figcaption></td>
+    <td><img src="images/p5_displ128.png"><figcaption>Displacement mapping with higher resolution. </figcaption></td>
+  </tr>
+  </table>
+<p>Mirror shader</p>
+<table >
+  <col width="33%">
+  <col width="33%">
+  <col width="33%">
+  <tr>
+    <td><img src="images/p5_mirrorcloth.png"><figcaption></figcaption></td>
+    <td><img src="images/p5_mirrorsphere.png"><figcaption> </figcaption></td>
+    <td><img src="images/p5_mirrorsphered.png"><figcaption></figcaption></td>
+  </tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <title>CS 184 Mesh Editor</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+<p><i>**This is from a UC Berkeley course project, so the source code is not publicly viewable. If you are an employer interested in viewing my project code, please contact me privately.**</i></p>
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2020</h1>
+<h1 align="middle">Project 2: Mesh Editor</h1>
+<h2 align="middle">Helen Yang</h2>
+<div>
+
+<h2 align="middle">Overview</h2>
+<p>
+Like the first project, actually implementing functions helped me better appreciate why we use data structures like half edges for operations like mesh traversal and transforms when it may at first seem simpler to use sets of vertices and edges. I also gained a better intuition behind algorithms like loop subdivision by implementing the different steps myself and having to think about how and when to keep track of values like the transformed positions. With all the pointers used to represent meshes with the halfedge data structure, this project was definitely harder to debug than the first project. </p>
+
+<h2 align="middle">Section I: Bezier Curves and Surfaces</h2>
+
+<h3 align="middle">Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
+
+<p>
+  Bezier curves are defined by a series of control points. The de Casteljau algorithm iteratively or recursively defines how to evaluate the curve based on the points. Given a parameter \(t\) between 0 and 1, the point for the next level is \(t\) proportionally along a line connecting each pair of consecutive points, effectively reducing the number of points by one each time. More specifically, given 2 points \((x_1, y_1\) and \((x_2, y_2\), the next point is \(((1-t) * x_1 + t * x_2, (1-t) * y_1 + t * y_2) \). The algorithm terminates when there is only a single point remaining, which is a point on the Bezier curve.
+  <br><br>
+  The blue points are the result of evaluating each iteration of de Casteljau's algorithm on the white control points. The red point in the last step is a point on the resulting Bezier curve.
+</p>
+
+<div align="middle">
+  <table style="width:100%">
+    <col width=33%>
+    <col width=33%>
+    <col width=33%>
+
+    <tr>
+      <td>
+        <img src="images/part1_level5.png" align="middle" width="100%"/>
+        <figcaption align="middle"></figcaption>
+      </td>
+      <td>
+        <img src="images/part1_level4.png" align="middle" width="100%"/>
+        <figcaption align="middle"></figcaption>
+      </td>
+      <td>
+        <img src="images/part1_level3.png" align="middle" width="100%"/>
+        <figcaption align="middle"></figcaption>
+      </td>
+    </tr>
+    <br>
+    <tr>
+      <td>
+        <img src="images/part1_level2.png" align="middle" width="100%"/>
+        <figcaption align="middle"></figcaption>
+      </td>
+      <td>
+        <img src="images/part1_level1.png" align="middle" width="100%"/>
+        <figcaption align="middle"></figcaption>
+      </td>
+      <td>
+        <img src="images/part1_level0.png" align="middle" width="100%"/>
+        <figcaption align="middle"></figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+  <table>
+    <col width="50%">
+    <col width="50%">
+    <tr>
+      <td>
+        <img src="images/part1_completedcurve.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">Completed curve in green.</figcaption>
+      </td>
+      <td>
+        <img src="images/part1_newcurve.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">Another fun curve.</figcaption>
+      </td>
+    </tr>
+
+  </table>
+  <br><br>
+
+<h3 align="middle">Part 2: Bezier surfaces with separable 1D de Casteljau subdivision</h3>
+<p>
+  Expanding from 2D Bezier curves to 3D surfaces, we still use the basic de Casteljau algorithm. Given an \(n \times n\) grid of control points and parametric parameters \(u\) and \(v\), we first evaluate the Bezier curves created in by the points in each row (reducing each row to a single point) with parameter \(u\). Each of those single points are then the control points for a Bezier curve that can be evaluated with parameter \(v\), resulting in a point on the Bezier surface evaluated at \(u\) and \(v\).
+</p>
+  <div align="middle">
+    <img src="images/part2_teapot.png" align="middle" width="60%"/>
+    <figcaption style="text-align: center" align="middle">A Bezier surface in the shape of a teapot.</figcaption>
+  </div>
+
+  <br><br>
+
+<h2 align="middle">Section II: Sampling</h2>
+
+<h3 align="middle">Part 3: Average normals for halfedge meshes</h3>
+  <p>
+    In this part, I implemented area weighted normals for each vertex. Iterating through the faces of a vertex via half edges (given a starting half edge, the next triangle would be that half edge's twin's next), for each face I found the coordinates of the 3 vertices and used those to compute the face area. I kept a running total normal vector and for each face added its normal vector, weighted by the face area. Finally, I normalized the normal vector.
+
+    <br><br>
+    Phong shading produces much smoother changes along the surface than flat shading.
+  </p>
+  <table>
+    <col width="50%">
+    <col width="50%">
+    <tr>
+      <td>
+        <img src="images/part3_flatshading.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">Flat shading.</figcaption>
+      </td>
+      <td>
+        <img src="images/part3_phongshading.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">Phong shading using area weighted vertex normals.</figcaption>
+      </td>
+    </tr>
+
+  </table>
+<br><br>
+<h3 align="middle">Part 4: Halfedge flip</h3>
+  <div align="center">
+  <img src="images/part4_flip_diagram.jpg" align="middle" width="60%"/>
+</div>
+<p>
+ In order to keep track of all the halfedges, edges, vertices, and faces, I wrote down each one and their relationships before and after flipping, using the above diagram as a guide. Flipping does not require any actual addition or deletion of halfedges, only renaming (for example \(bc\) becomes \(ad\) ) which is just pointer manipulation. In implementing this section, I first found all the pointers to the relevant mesh elements, renamed them if necessary, and reassigned their contained pointers (halfedges for faces, vertices, and edges and next halfedge, twin halfedge, vertex, edge, and face for halfedges) to their appropriate new ones.
+</p>
+  <div align="center">
+    <img src="images/part4_fullmesh.png" align="middle" width="60%"/>
+    <figcaption style="text-align: center" align="middle">Full mesh.</figcaption>
+  </div>
+  <table>
+    <col width="50%">
+    <col width="50%">
+    <tr>
+      <td>
+        <img src="images/part4_beforeflip.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">A portion of the mesh before flipping edges. </figcaption>
+      </td>
+      <td>
+        <img src="images/part4_afterflip.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">A portion of the mesh after flipping edges.</figcaption>
+      </td>
+    </tr>
+  </table>
+  <br><br>
+
+<h3 align="middle">Part 5: Halfedge split</h3>
+  <div align="center">
+    <img src="images/part5_splitdiagram.jpg" align="middle" width="60%"/>
+  </div>
+<p>
+  Unlike the edge flip operation, the edge split operation, which consists of splitting a given edge in half, creating 4 triangles from an original single one, requires creating new mesh elements: 1 midpoint vertex, 2 new faces, 3 new edges, and 6 new halfedges. In implementing this part, I wrote down all the elements and their relationships for the diagram above both before and after the split to keep track of everything. Then I found all the pointers to the elements from the given input edges, created the necessary new elements, and assigned the correct pointers to match the right side of the diagram above. 
+</p>
+  <table>
+    <col width="33%">
+    <col width="33%">
+    <col width="33%">
+    <tr>
+      <td>
+        <img src="images/part5_beforesplit.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">A portion of the mesh before splitting edges. </figcaption>
+      </td>
+      <td>
+        <img src="images/part5_aftersplit.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">A portion of the mesh after splitting edges.</figcaption>
+      </td>
+      <td>
+        <img src="images/part5_aftersplitflip.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">A portion of the mesh after splitting and flipping edges.</figcaption>
+      </td>
+    </tr>
+  </table>
+  <br><br>
+
+
+<h3 align="middle">Part 6: Loop subdivision for mesh upsampling</h3>
+<div>
+  <img src="images/part6_diagram.jpg" align="middle" width="100%"/>
+</div>
+<p>
+  In this part, I implemented the loop subdivision algorithm, used to upsample the mesh by creating new vertices and edges using the halfedge flip and split methods written above. 
+  Each edge in the original mesh is split, and edges between new and old vertices are flipped to create more uniform triangles, as shown in the above diagram. Lastly, both new and old vertex positions are reweighted based on the position of neighboring vertices. 
+</p>
+<p>
+  Because vertex positions are reweighted based on positions in the original mesh, I used the newPosition attribute in the Vertex (for existing mesh vertices) and Edge (for the new vertex to be created on an edge) classes to keep track of what the new position would be. This required careful modification of the halfedge flip method from before to make sure  newPosition remained properly set. 
+</p>
+
+  <table>
+    <col width="50%">
+    <col width="50%">
+    <tr>
+      <td>
+        <img src="images/part6_orig.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">(0) Original mesh before subdivision. </figcaption>
+      </td>
+      <td>
+        <img src="images/part6_step1.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">(1) Splitting edges. </figcaption>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="images/part6_step2.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">(2) Flipping edges. </figcaption>
+      </td>
+      <td>
+        <img src="images/part6_step3.png" align="middle" width="100%"/>
+        <figcaption style="text-align: center" align="middle">(3) After reweighting vertex positions.</figcaption>
+      </td>
+    </tr>
+  </table>
+  <p>
+    Loop subdivision smooths out sharp edges and creases because the splitting and flipping step prioritizes uniformly shaped triangles and the reweighting step averages positions, acting as a smoothing low pass filter. Especially as seen in the cube and torus below, the sharp angles and edges become smooth and the overall shape is asymmetrical after repeated subdivision.
+  </p>
+  <p>
+    Meshes at different levels of subdivision. 
+  </p>
+   <table>
+    <col width="25%">
+    <col width="25%">
+    <col width="25%">
+    <col width="25%">
+    <tr>
+      <td>
+        <img src="images/part6_cube1.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_cube2.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_cube3.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_cube4.png" align="middle" width="100%"/>
+      </td>
+    </tr>
+     <tr>
+     <td>
+       <img src="images/part6_torus1.png" align="middle" width="100%"/>
+     </td>
+     <td>
+       <img src="images/part6_torus2.png" align="middle" width="100%"/>
+     </td>
+     <td>
+       <img src="images/part6_torus3.png" align="middle" width="100%"/>
+     </td>
+     <td>
+       <img src="images/part6_torus4.png" align="middle" width="100%"/>
+     </td>
+   </tr>
+    <tr>
+      <td>
+        <img src="images/part6_orig.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_teapot2.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_teapot3.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_teapot4.png" align="middle" width="100%"/>
+      </td>
+    </tr>
+  </table>
+  <p>
+    If we want to keep a more symmetrical shape, we can do some preprocessing in the form of presplitting edges. By presplitting the edges within the faces (as opposed to the edges that are the 3D edges of the object), the asymmetrical behavior is alleviated because there will be more subdivision along the faces than the edges not presplit, so the edges are smoothed out slower than the faces. 
+  </p>
+  <table>
+    <col width="25%">
+    <col width="25%">
+    <col width="25%">
+    <col width="25%">
+    <tr>
+      <td>
+        <img src="images/part6_cubepre.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_cubepre2.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_cubepre3.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_cubepre4.png" align="middle" width="100%"/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="images/part6_toruspre1.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_toruspre2.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_toruspre3.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_toruspre4.png" align="middle" width="100%"/>
+      </td>
+    </tr>
+  </table>
+  <p>
+     I ran into some visually interesting bugs in the process of debugging this section, shown below. Some of the problems I encountered were using incorrect number types (int versus float), forgetting to set the newPosition attribute correctly, and not flipping only the new edges between new and old vertices.
+  </p>
+  <table>
+    <col width="25%">
+    <col width="25%">
+    <col width="25%">
+    <col width="25%">
+    <tr>
+      <td></td>
+      <td>
+        <img src="images/part6_mistake.png" align="middle" width="100%"/>
+      </td>
+      <td>
+        <img src="images/part6_mistake2.png" align="middle" width="100%"/>
+      </td>
+      <td></td>
+    </tr>
+  </table>
+
+</body>
+</html>
